@@ -76,7 +76,7 @@ function VideoItem({ key, videoName, handleFullViewe }: props) {
         <div>
           <label>{videoName}</label>
         </div>
-        {videoName.split('.')[videoName.split('.').length - 1] === 'mp4' ? (
+        {['mp4', 'mkv'].includes(videoName.split('.')[videoName.split('.').length - 1])  ? (
           <video
             ref={videoRef}
             onClick={(e) => {

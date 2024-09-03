@@ -87,12 +87,22 @@ function App() {
               onScroll={handleScroll}
             >
               <div className={Style.DummyArea}>{`prev`}</div>
-              <video
-                src={`http://localhost:3001/api/v1/video/${fullViewe}`}
-                key={`video-${fullViewe}`}
-                controls={true}
-                autoPlay={true}
-              ></video>
+              {['mp4', 'mkv'].includes(
+                fullViewe.split('.')[fullViewe.split('.').length - 1],
+              ) ? (
+                <video
+                  src={`http://localhost:3001/api/v1/video/${fullViewe}`}
+                  key={`video-${fullViewe}`}
+                  controls={true}
+                  autoPlay={true}
+                ></video>
+              ) : (
+                <img
+                  height={'100%'}
+                  src={`http://localhost:3001/api/v1/video/${fullViewe}`}
+                  alt={fullViewe}
+                />
+              )}
               <div className={Style.DummyArea}>{`next`}</div>
             </div>
             <div className={Style.FullViewInfo}>

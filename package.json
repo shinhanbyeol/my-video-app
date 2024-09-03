@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "backend": "cd backend && npm run start",
+    "frontend": "cd app && npm run dev"    
+  },
   "dependencies": {
     "lodash": "^4.17.21"
   },
