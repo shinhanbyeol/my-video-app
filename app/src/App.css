@@ -1,0 +1,13 @@
+body {
+  background-color: rgb(17, 17, 17);
+}
+
+#root {  
+  margin: 0 auto;  
+  text-align: center;
+  width: 100%;  
+}
+
+* {
+  box-sizing: border-box;
+}

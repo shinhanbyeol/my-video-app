@@ -1,0 +1,144 @@
+@mixin column1 {
+  grid-template-columns: 1fr;
+}
+
+@mixin column2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@mixin column3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (min-width: 300px) {
+  .Videos {
+    @include column1;
+  }
+}
+
+@media (min-width: 375px) {
+  .Videos {
+    @include column1;
+  }
+}
+
+@media (min-width: 500px) {
+  .Videos {
+    @include column1
+  }
+}
+
+@media (min-width: 550px) {
+  .Videos {
+    @include column2
+  }
+}
+
+@media (min-width: 900px) {
+  .Videos {
+    @include column3
+  }
+}
+
+@media (min-width: 900px) {
+  .Videos {
+    @include column3
+  }
+}
+
+
+.App {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+
+  .Full {
+    top: 0;
+    left: 0;
+    position: fixed;
+    z-index: 10;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    padding: 1rem;
+    align-items: center;
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.68) 0%, rgb(0, 0, 10, 0.68) 70%, rgb(12, 13, 44, 0.68) 100%);
+
+    .FullView {
+      flex: 1;
+      display: flex;
+      gap: 1.25rem;
+      height: 80%;
+      background: linear-gradient(0deg, rgba(0, 0, 0) 0%, rgb(0, 0, 10) 70%, rgb(12, 13, 44) 100%);
+
+      .FullViewVideo {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem;
+
+        video {
+          width: auto;
+          max-width: 100%;
+          height: fit-content;
+          max-height: 100%;
+          z-index: 11;
+        }
+      }
+
+      .FullViewVideo::-webkit-scrollbar {
+        display: none;
+      }
+
+      .FullViewInfo {
+        z-index: 11;
+        width: 25rem;
+        height: 100%;
+        background-color: black;
+      }
+
+      .DummyArea {
+        height: 2rem;
+        width: 1rem;
+        visibility: hidden;
+      }
+    }
+  }
+
+  .Videos {
+    height: 100%;
+    padding: 2rem;
+    padding-bottom: 12rem;
+    width: 100%;
+    display: grid;
+    column-gap: 1.25rem;
+    row-gap: 1.125rem;
+    grid-auto-rows: 18px;
+    margin: 0 auto;
+    overflow-y: auto;
+    mask-image: linear-gradient(to bottom, black calc(68%), transparent 100%);
+  }
+
+  .Menu {
+    padding: 1.2rem;
+    background-color: #00000090;
+    width: 100%;
+    height: 6rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    position: absolute;
+    bottom: 0;
+    z-index: 1;
+    justify-content: space-between;
+    section {
+      flex: 1;
+      button {
+        font-size: 1.125rem;
+      }
+    }    
+  }
+}
