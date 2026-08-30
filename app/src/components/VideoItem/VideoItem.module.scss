@@ -1,166 +1,151 @@
-.VideoItem {  
-  height: max-content;
-  margin-bottom: var(--gap);
+.VideoItem {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  border: solid 1px #353232;
-  border-radius: 12px 12px 12px 12px;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   overflow: hidden;
-  margin: 0px;
+  border-radius: 12px;
+  border: 1px solid #302f2f;
   background-color: #00000050;
-  // grid-row-end: span 18;
+  cursor: pointer;
+  // 스크롤로 화면에 들어오고 나갈 때마다 부드럽게 나타났다 사라진다
+  // (.Visible 클래스는 IntersectionObserver로 토글된다).
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.4s ease;
+
+  &.Visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
 
   &:hover {
-    border-radius: 12px 12px 0px 0px;
+    transform: translateY(-3px);
+    border-color: #4d4d4d;
+    box-shadow: 0 16px 28px -16px rgba(0, 0, 0, 0.7);
   }
 
-  div {
-    position: absolute;
-    top: 0;
-    display: flex;
-    flex-direction: row;
-    padding-top: 0.5rem;
-    z-index: 1;
-    background-color: #00000080;
-    mask-image: linear-gradient(to bottom, #000 calc(60%), transparent 100%);
+  video,
+  img {
+    display: block;
     width: 100%;
-    height: 60px;
-
-    label {
-      color: #fff;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      font-size: 1.125rem;
-      padding: 0px 10px;
-    }
-  }
-
-  video {
-    filter: opacity(0.95) brightness(0.95);
-
-    &:hover {
-      cursor: pointer;
-      filter: opacity(1) brightness(1);
-      mask-image: none;
-    }
-
-    width: 100%;
-    /* only for older non-grid browsers: */
-  }
-}
-
-
-.Vislble {
-  animation: fadein 2s;
-  -moz-animation: fadein 2s;
-  /* Firefox */
-  -webkit-animation: fadein 2s;
-  /* Safari and Chrome */
-  -o-animation: fadein 2s;
-  /* Opera */
-}
-
-.None {
-  animation: fadeout 1s;
-  -moz-animation: fadeout 1s;
-  /* Firefox */
-  -webkit-animation: fadeout 1s;
-  /* Safari and Chrome */
-  -o-animation: fadeout 1s;
-  /* Opera */
-}
-
-@keyframes fadein {
-  from {
+    height: 100%;
+    object-fit: cover;
+    filter: opacity(0.94) brightness(0.94);
     opacity: 0;
+    transition:
+      filter 0.2s ease,
+      opacity 0.25s ease;
   }
 
-  to {
-    opacity: 1;
-  }
-}
-
-@-moz-keyframes fadein {
-
-  /* Firefox */
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@-webkit-keyframes fadein {
-
-  /* Safari and Chrome */
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@-o-keyframes fadein {
-
-  /* Opera */
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes fadeout {
-  from {
+  video.Ready,
+  img.Ready {
     opacity: 1;
   }
 
-  to {
-    opacity: 0;
+  &:hover video.Ready,
+  &:hover img.Ready {
+    filter: opacity(1) brightness(1.03);
   }
 }
 
-@-moz-keyframes fadeout {
+// 영상 항목임을 표시하는 작은 재생 배지. 실제 영상은 호버 전까지 로드하지
+// 않으므로, 그리드 단계에선 이 아이콘 하나로만 "영상"임을 알려준다.
+.PlayBadge {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  pointer-events: none;
+}
 
-  /* Firefox */
+// 마우스를 올린 동안만 잠깐 마운트되는 실제 영상 미리보기. 썸네일 이미지
+// 위에 정확히 겹쳐 채운다.
+.HoverPreview {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.Skeleton {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    var(--skeleton-base, #1c1c1c) 30%,
+    var(--skeleton-shine, #2c2c2c) 50%,
+    var(--skeleton-base, #1c1c1c) 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes shimmer {
   from {
-    opacity: 1;
+    background-position: 150% 0;
   }
 
   to {
-    opacity: 0;
+    background-position: -50% 0;
   }
 }
 
-@-webkit-keyframes fadeout {
-
-  /* Safari and Chrome */
-  from {
-    opacity: 1;
-  }
-
-  to {
-    opacity: 0;
+@media (prefers-reduced-motion: reduce) {
+  .Skeleton {
+    animation: none;
+    background: var(--skeleton-base, #1c1c1c);
   }
 }
 
-@-o-keyframes fadeout {
+.Caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 1.75rem 0.85rem 0.65rem;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.82), transparent);
+  color: #fff;
+  font-size: 0.82rem;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  pointer-events: none;
+}
 
-  /* Opera */
-  from {
-    opacity: 1;
+.VideoItem:hover .Caption {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .VideoItem {
+    transform: none;
+    transition: opacity 0.2s ease;
   }
 
-  to {
-    opacity: 0;
+  .VideoItem.Visible,
+  .VideoItem:hover {
+    transform: none;
   }
 }

@@ -1,12 +1,16 @@
 {
   "scripts": {
-    "backend": "cd backend && npm run start",
-    "frontend": "cd app && npm run dev"    
+    "backend": "pnpm --dir backend run start",
+    "frontend": "pnpm --dir app run dev",
+    "dev": "concurrently -n backend,frontend -c blue,green \"pnpm run backend\" \"pnpm run frontend\"",
+    "build": "pnpm --dir app run build && pnpm --dir backend run warm",
+    "serve": "pnpm --dir backend run start"
   },
   "dependencies": {
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@types/lodash": "^4.17.6"
+    "@types/lodash": "^4.17.6",
+    "concurrently": "^8.2.2"
   }
 }
