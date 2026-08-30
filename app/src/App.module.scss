@@ -1,57 +1,49 @@
-@mixin column1 {
-  grid-template-columns: 1fr;
-}
-
-@mixin column2 {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-@mixin column3 {
-  grid-template-columns: repeat(3, 1fr);
-}
-
-@media (min-width: 300px) {
-  .Videos {
-    @include column1;
-  }
-}
-
-@media (min-width: 375px) {
-  .Videos {
-    @include column1;
-  }
-}
-
-@media (min-width: 500px) {
-  .Videos {
-    @include column1
-  }
-}
-
-@media (min-width: 550px) {
-  .Videos {
-    @include column2
-  }
-}
-
-@media (min-width: 900px) {
-  .Videos {
-    @include column3
-  }
-}
-
-@media (min-width: 900px) {
-  .Videos {
-    @include column3
-  }
-}
-
-
 .App {
   position: relative;
   display: flex;
   flex-direction: column;
   height: 100vh;
+
+  .Header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.75rem;
+    background: rgba(8, 8, 18, 0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 2;
+
+    .Brand {
+      color: #fff;
+      letter-spacing: -0.01em;
+
+      svg {
+        color: var(--mantine-color-blue-4);
+      }
+    }
+
+    .HeaderCount {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    // 그리드 카드 크기(열 수) 조절 슬라이더. Header가
+    // justify-content: space-between이라 Brand/HeaderCount 사이 세 번째
+    // 자식으로 넣으면 자연스럽게 가운데 자리를 잡는다.
+    .GridSizeControl {
+      color: rgba(255, 255, 255, 0.55);
+
+      svg {
+        flex-shrink: 0;
+      }
+    }
+
+    .GridSizeSlider {
+      width: 120px;
+    }
+  }
 
   .Full {
     top: 0;
@@ -61,84 +53,247 @@
     height: 100%;
     width: 100%;
     display: flex;
-    padding: 1rem;
-    align-items: center;
-    background: linear-gradient(0deg, rgba(0, 0, 0, 0.68) 0%, rgb(0, 0, 10, 0.68) 70%, rgb(12, 13, 44, 0.68) 100%);
+    flex-direction: column;
+    background: linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.72) 0%,
+      rgba(0, 0, 10, 0.72) 70%,
+      rgba(12, 13, 44, 0.72) 100%
+    );
+    animation: fadeInOverlay 0.18s ease-out;
+
+    .FullTopBar {
+      // 문서 흐름에서 빼서 미디어 위에 얹는다 — 그래야 아래 .FullView가
+      // 이 바의 높이만큼 밀리지 않고 화면 전체 높이를 그대로 차지하고,
+      // 제목 바는 그 위에 오버레이로만 켜졌다 꺼졌다 한다.
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.9rem 1.25rem;
+      background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.68) 0%,
+        rgba(0, 0, 0, 0.4) 70%,
+        transparent 100%
+      );
+      z-index: 12;
+      transition:
+        opacity 0.22s ease,
+        transform 0.22s ease;
+
+      &.FullTopBarHidden {
+        opacity: 0;
+        transform: translateY(-100%);
+        pointer-events: none;
+      }
+
+      .FullTitle {
+        color: #fff;
+        min-width: 0;
+        flex: 1;
+      }
+
+      // zip 풀뷰에서 "3 / 12" 형태로 지금 보고 있는 이미지 위치를 보여준다.
+      .ZipCounter {
+        flex-shrink: 0;
+        color: rgba(255, 255, 255, 0.75);
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+
+      .Close {
+        flex-shrink: 0;
+        color: #fff;
+
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.12);
+        }
+      }
+    }
 
     .FullView {
-      flex: 1;
       display: flex;
-      gap: 1.25rem;
-      height: 80%;
-      background: linear-gradient(0deg, rgba(0, 0, 0) 0%, rgb(0, 0, 10) 70%, rgb(12, 13, 44) 100%);
+      justify-content: center;
+      align-items: center;
+      flex: 1;
+      min-height: 0;
+      cursor: pointer;
+      background: linear-gradient(0deg, #000 0%, rgb(0, 0, 10) 70%, rgb(12, 13, 44) 100%);
+
+      .Prev,
+      .Next {
+        flex-shrink: 0;
+        color: #fff;
+        opacity: 0.55;
+        transition: opacity 0.15s ease;
+
+        &:hover {
+          opacity: 1;
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+      }
 
       .FullViewVideo {
+        position: relative;
         flex: 1;
+        height: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 0.5rem;
+        // 확대(줌)했을 때 미디어가 원래 칸 밖으로 삐져나가 레이아웃을
+        // 밀어내지 않도록 잘라낸다. 전체화면 진입 대상이기도 하다.
+        overflow: hidden;
 
-        video {
+        video,
+        img {
           width: auto;
           max-width: 100%;
           height: fit-content;
           max-height: 100%;
           z-index: 11;
+          border-radius: 4px;
+          // transform-origin은 인라인 style로 커서 위치에 맞춰 매 휠
+          // 이벤트마다 갱신된다 (App.tsx의 zoom 상태 참고).
+          will-change: transform;
         }
-      }
 
-      .FullViewVideo::-webkit-scrollbar {
-        display: none;
-      }
+        // 커스텀 플레이어 컨트롤 바 — 재생/일시정지, 진행 바, 볼륨, 배속,
+        // 전체화면. 상단 제목 바와 마찬가지로 미디어 위에 얹히는 오버레이라
+        // 확대 여부와 무관하게 항상 같은 위치에 떠 있다.
+        .PlayerControls {
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 13;
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          padding: 0.6rem 1rem;
+          cursor: default;
+          background: linear-gradient(
+            to top,
+            rgba(0, 0, 0, 0.75) 0%,
+            rgba(0, 0, 0, 0.45) 65%,
+            transparent 100%
+          );
+          transition:
+            opacity 0.22s ease,
+            transform 0.22s ease;
 
-      .FullViewInfo {
-        z-index: 11;
-        width: 25rem;
-        height: 100%;
-        background-color: black;
-      }
+          &.PlayerControlsHidden {
+            opacity: 0;
+            transform: translateY(100%);
+            pointer-events: none;
+          }
+        }
 
-      .DummyArea {
-        height: 2rem;
-        width: 1rem;
-        visibility: hidden;
+        .TimeText {
+          flex-shrink: 0;
+          color: rgba(255, 255, 255, 0.75);
+          font-variant-numeric: tabular-nums;
+          white-space: nowrap;
+        }
+
+        .ProgressTrack {
+          position: relative;
+          flex: 1;
+          height: 16px;
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+          touch-action: none;
+        }
+
+        .ProgressTrackLine {
+          position: absolute;
+          left: 0;
+          right: 0;
+          height: 4px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.25);
+          pointer-events: none;
+        }
+
+        .ProgressFill {
+          position: absolute;
+          left: 0;
+          height: 4px;
+          border-radius: 999px;
+          background: var(--mantine-color-blue-4);
+          pointer-events: none;
+        }
+
+        .ProgressThumb {
+          position: absolute;
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: #fff;
+          transform: translateX(-50%);
+          box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+          pointer-events: none;
+        }
+
+        .VolumeSlider {
+          width: 80px;
+          flex-shrink: 0;
+        }
       }
     }
   }
 
   .Videos {
-    height: 100%;
-    padding: 2rem;
-    padding-bottom: 12rem;
+    flex: 1;
+    min-height: 0;
     width: 100%;
-    display: grid;
-    column-gap: 1.25rem;
-    row-gap: 1.125rem;
-    grid-auto-rows: 18px;
-    margin: 0 auto;
-    overflow-y: auto;
-    mask-image: linear-gradient(to bottom, black calc(68%), transparent 100%);
+    padding: 1.75rem 1.75rem 0;
+    mask-image: linear-gradient(to bottom, black calc(85%), transparent 100%);
   }
 
   .Menu {
-    padding: 1.2rem;
-    background-color: #00000090;
+    padding: 0.75rem 1.5rem;
+    background: rgba(8, 8, 18, 0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
     width: 100%;
-    height: 6rem;
+    height: auto;
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: center;
+    gap: 0.85rem;
     position: absolute;
     bottom: 0;
     z-index: 1;
-    justify-content: space-between;
-    section {
-      flex: 1;
-      button {
-        font-size: 1.125rem;
-      }
-    }    
+
+    .MenuPage {
+      color: rgba(255, 255, 255, 0.87);
+      font-variant-numeric: tabular-nums;
+      min-width: 3.5rem;
+      text-align: center;
+    }
+
+    .MenuTotal {
+      color: rgba(255, 255, 255, 0.5);
+      white-space: nowrap;
+    }
+  }
+}
+
+@keyframes fadeInOverlay {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
   }
 }

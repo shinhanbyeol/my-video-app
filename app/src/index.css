@@ -30,8 +30,7 @@ body {
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  max-width: 1280px;
+  -moz-osx-font-smoothing: grayscale;  
   height: 100vh;
 }
 
@@ -77,33 +76,44 @@ button:focus-visible {
 }
 
 
-/* Chrome, Whale, Edge */
+/* macOS 스타일 스크롤바: 평소엔 얇고 은은하게 떠 있다가, 트랙 위에
+   마우스를 올리면 살짝 두꺼워지고 또렷해지는 오버레이형 스크롤바.
+   트랙 자체는 항상 투명해서 배경과 분리된 느낌이 없다. */
 
-/* 스크롤바 전체 기본 꾸미기 */
-*::-webkit-scrollbar {  
-  background: #1a1a1a00;
-  width: 0.5rem;
-  overflow: visible;
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
 }
 
-*::-webkit-scrollbar:hover {
-  background: #1a1a1a90;
-  display: inline;  
+/* Chrome, Whale, Edge (WebKit) */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
 
-/* 스크롤바 막대 꾸미기 */
-*::-webkit-scrollbar-thumb {  
-  width: 0.5rem;
-  border-radius: 4px;
-  background: #fff;  
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  /* border를 background-clip: content-box와 함께 쓰면 트랙 안에서
+     thumb이 살짝 여백을 두고 떠 있는 캡슐 형태가 된다 (macOS 느낌). */
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.22);
+  background-clip: content-box;
+  transition: background-color 0.2s ease;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  width: 2rem;  
-  position: fixed;
+  background-color: rgba(255, 255, 255, 0.42);
 }
 
-/* 스크롤바 트랙 꾸미기 */
-*::-webkit-scrollbar-track {
-  width: 1rem;
+*::-webkit-scrollbar-thumb:active {
+  background-color: rgba(255, 255, 255, 0.55);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
 }

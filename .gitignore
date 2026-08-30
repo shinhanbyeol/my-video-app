@@ -41,6 +41,15 @@ build/Release
 node_modules/
 jspm_packages/
 
+# 변환(remux/재인코딩)된 mp4 캐시 - 원본으로부터 언제든 재생성 가능
+backend/transcode-cache/
+
+# 썸네일 캐시 - 원본으로부터 언제든 재생성 가능
+backend/thumbnail-cache/
+
+# 프론트엔드 프로덕션 빌드 결과물 (pnpm run build 로 재생성 가능)
+backend/build/
+
 # TypeScript v1 declaration files
 typings/
 
