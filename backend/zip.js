@@ -26,6 +26,32 @@ function compareEntryNames(a, b) {
   return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
 }
 
+// AdmZip에 경로를 그대로 넘기면 내부적으로 fs.readFileSync(path)로 전체
+// 파일을 읽는데, Node의 readFileSync/readFile은 2GiB(2^31-1바이트)를 넘는
+// 파일에 대해 "File size (N) is greater than 2 GiB"라는 하드 리밋 에러를
+// 던진다 — Buffer 자체의 한계가 아니라 readFileSync 구현에 박힌 안전장치일
+// 뿐이다(buffer.constants.MAX_LENGTH는 이보다 훨씬 크다). 사진/영상을 잔뜩
+// 담은 앨범 zip은 2GiB를 쉽게 넘기므로, fs.readSync로 직접 청크 단위로 읽어
+// Buffer를 만들어 그 리밋을 우회한 뒤 AdmZip에는 경로 대신 Buffer로 넘긴다.
+function readFileNoSizeLimit(filePath) {
+  const { size } = fs.statSync(filePath);
+  const buffer = Buffer.alloc(size);
+  const fd = fs.openSync(filePath, 'r');
+  try {
+    const CHUNK_SIZE = 64 * 1024 * 1024;
+    let readTotal = 0;
+    while (readTotal < size) {
+      const toRead = Math.min(CHUNK_SIZE, size - readTotal);
+      const bytesRead = fs.readSync(fd, buffer, readTotal, toRead, readTotal);
+      if (bytesRead === 0) break; // 파일이 stat 시점보다 짧아진 경우 방어
+      readTotal += bytesRead;
+    }
+    return buffer;
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
 const ZIP_CACHE_LIMIT = 3;
 const zipCache = new Map(); // key: `${zipPath}:${mtimeMs}` -> { entries: AdmZip.IZipEntry[] }
 
@@ -39,7 +65,7 @@ function getCachedZip(zipPath, mtimeMs) {
     return cached;
   }
 
-  const zip = new AdmZip(zipPath);
+  const zip = new AdmZip(readFileNoSizeLimit(zipPath));
   const entries = zip
     .getEntries()
     .filter((entry) => !entry.isDirectory && isImageEntryName(entry.entryName))
