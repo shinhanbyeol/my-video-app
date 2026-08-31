@@ -58,7 +58,7 @@ const SCALE_FILTER = `scale='if(gt(iw,ih),${THUMBNAIL_WIDTH},-2)':'if(gt(iw,ih),
 
 async function generateImageThumbnail(sourcePath, tmpPath) {
   await runFfmpeg(
-    ['-y', '-i', sourcePath, '-vf', SCALE_FILTER, '-q:v', '4', tmpPath],
+    ['-y', '-i', sourcePath, '-frames:v', '1', '-vf', SCALE_FILTER, '-q:v', '4', tmpPath],
     'thumb-image',
   );
 }
