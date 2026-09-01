@@ -29,9 +29,13 @@
       color: rgba(255, 255, 255, 0.5);
     }
 
-    // 그리드 카드 크기(열 수) 조절 슬라이더. Header가
+    // 그리드 크기 조절 / 타입 필터 / 정렬 토글을 한데 묶는 그룹. Header가
     // justify-content: space-between이라 Brand/HeaderCount 사이 세 번째
     // 자식으로 넣으면 자연스럽게 가운데 자리를 잡는다.
+    .Controls {
+      flex-wrap: wrap;
+    }
+
     .GridSizeControl {
       color: rgba(255, 255, 255, 0.55);
 
@@ -42,6 +46,11 @@
 
     .GridSizeSlider {
       width: 120px;
+    }
+
+    // 이미지/영상 타입 필터.
+    .TypeFilter {
+      background: rgba(255, 255, 255, 0.06);
     }
   }
 

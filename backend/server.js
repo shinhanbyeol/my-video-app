@@ -176,14 +176,17 @@ function streamFile(req, res, filePath, streamOptions) {
 // 느려진다. 디렉토리의 mtime이 바뀌었을 때만 다시 스캔하도록 캐시한다.
 let mediaListCache = {
   dirMtimeMs: 0,
-  fileNames: [],
+  // { name, birthtimeMs }[]. 정렬/필터 순서는 요청마다 다를 수 있으므로
+  // (type/sort 쿼리) 여기서는 정렬하지 않은 채로 캐시해두고, 각 요청에서
+  // 필요한 순서로 다시 정렬한다.
+  files: [],
 };
 
-async function getMediaFileNames() {
+async function getMediaFiles() {
   const dirStat = await fs.promises.stat(videoFilePath);
 
   if (dirStat.mtimeMs === mediaListCache.dirMtimeMs) {
-    return mediaListCache.fileNames;
+    return mediaListCache.files;
   }
 
   // withFileTypes를 쓰면 각 항목의 파일/디렉토리 여부를 readdir 결과에서
@@ -195,24 +198,19 @@ async function getMediaFileNames() {
   // 다시 필요하다. 동기 호출 대신 Promise.all로 병렬 조회해 이벤트 루프
   // 점유를 최소화한다. (디렉토리가 바뀌지 않는 한 이 결과는 캐시되므로,
   // 페이지를 넘길 때마다 매번 다시 계산하지는 않는다.)
-  const filesWithBirthtime = await Promise.all(
+  const files = await Promise.all(
     mediaEntries.map(async (entry) => {
       const stat = await fs.promises.stat(path.join(videoFilePath, entry.name));
       return { name: entry.name, birthtimeMs: stat.birthtimeMs };
     }),
   );
 
-  // 최근에 생성된 파일이 먼저 오도록 내림차순 정렬
-  const fileNames = filesWithBirthtime
-    .sort((a, b) => b.birthtimeMs - a.birthtimeMs)
-    .map((f) => f.name);
-
   mediaListCache = {
     dirMtimeMs: dirStat.mtimeMs,
-    fileNames,
+    files,
   };
-  logger.info('media-list', `디렉토리 재스캔: ${fileNames.length}개 파일 (생성일자 내림차순)`);
-  return fileNames;
+  logger.info('media-list', `디렉토리 재스캔: ${files.length}개 파일`);
+  return files;
 }
 
 // build path setting
@@ -222,9 +220,9 @@ app.use('/', express.static(__dirname + '/public', { maxAge: '1d' }));
 
 // get Videoes  api
 app.get('/api/v1/videoes', cors(corsOptions), async function (req, res) {
-  let fileNames;
+  let files;
   try {
-    fileNames = await getMediaFileNames();
+    files = await getMediaFiles();
   } catch (error) {
     logger.error('media-list', `조회 실패: ${error.message}`, error);
     return res.status(500).send({ error: 'server error' });
@@ -233,6 +231,27 @@ app.get('/api/v1/videoes', cors(corsOptions), async function (req, res) {
   // pagination
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
+
+  // 타입 필터: image/video만 유효한 값으로 받고, 그 외(또는 미지정)는 전체.
+  // zip은 이미지 여러 장을 담은 앨범으로 취급하므로(getMediaKind) 'image'
+  // 필터에 함께 포함시킨다.
+  const typeFilter = req.query.type === 'video' || req.query.type === 'image' ? req.query.type : 'all';
+  // 정렬: 파일 생성일자(birthtime) 기준. 기본값은 기존 동작과 같은 최신순(desc).
+  const sortOrder = req.query.sort === 'asc' ? 'asc' : 'desc';
+
+  const filteredFiles =
+    typeFilter === 'all'
+      ? files
+      : files.filter((file) => {
+          const kind = getMediaKind(file.name);
+          return typeFilter === 'video' ? kind === 'video' : kind !== 'video';
+        });
+
+  const sortedFiles = [...filteredFiles].sort((a, b) =>
+    sortOrder === 'asc' ? a.birthtimeMs - b.birthtimeMs : b.birthtimeMs - a.birthtimeMs,
+  );
+
+  const fileNames = sortedFiles.map((file) => file.name);
 
   const startIndex = (page - 1) * pageSize;
   const endIndex = startIndex + pageSize;
@@ -587,7 +606,7 @@ async function runWithConcurrency(items, limit, worker) {
 async function warmCachesInBackground() {
   let fileNames;
   try {
-    fileNames = await getMediaFileNames();
+    fileNames = (await getMediaFiles()).map((file) => file.name);
   } catch (error) {
     logger.error('cache-warm', `파일 목록 조회 실패: ${error.message}`);
     return;

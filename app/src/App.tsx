@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActionIcon, Group, Menu, Slider, Text } from '@mantine/core';
+import { ActionIcon, Group, Menu, SegmentedControl, Slider, Text } from '@mantine/core';
 import {
   IconChevronLeft,
   IconChevronRight,
@@ -9,13 +9,20 @@ import {
   IconMinimize,
   IconPlayerPause,
   IconPlayerPlay,
+  IconSortAscending,
+  IconSortDescending,
   IconVolume,
   IconVolume2,
   IconVolumeOff,
   IconX,
 } from '@tabler/icons-react';
 import './App.css';
-import { DEFAULT_PAGE_SIZE, videoSetter } from './state/videoSetter';
+import {
+  DEFAULT_PAGE_SIZE,
+  MediaTypeFilter,
+  SortOrder,
+  videoSetter,
+} from './state/videoSetter';
 import Style from './App.module.scss';
 import VirtualizedMasonry, {
   DEFAULT_TARGET_ITEM_WIDTH,
@@ -95,6 +102,13 @@ function App() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalVideos, setTotalVideos] = useState(0);
+
+  // ── 타입 필터 / 정렬 ─────────────────────────────────────────────────
+  // 'all'은 이미지/영상 구분 없이 전체를 보여준다. 정렬은 파일 생성일자
+  // 기준이며 'desc'(최신순)가 기존 기본 동작이다. 둘 다 서버에 쿼리로
+  // 전달되어 페이지네이션 전에 필터/정렬이 적용된다.
+  const [mediaType, setMediaType] = useState<MediaTypeFilter>('all');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   // 그리드 카드 목표 너비 — 슬라이더가 즉시 바꾸는 "시각적" 값. 그리드
   // 재배치(VirtualizedMasonry)에는 곧바로 반영돼 드래그하는 동안에도
@@ -234,18 +248,35 @@ function App() {
     // 아직 false인 상태를 보고 또 fetch해 항목이 중복으로 쌓인다.
     loadedPagesRef.current.add(page);
 
-    // pageSize도 의존성에 넣어야 한다 — 그리드 크기 조절로 pageSize가
-    // 바뀌면 items/page가 리셋되지만 page 값 자체는 이미 1일 수 있어(값이
-    // 안 바뀌면 이 effect가 재실행되지 않는다) pageSize 변화 자체가 새
-    // 요청을 트리거하는 신호 역할을 한다.
-    videoSetter(page, pageSize).then((data) => {
+    // pageSize/mediaType/sortOrder도 의존성에 넣어야 한다 — 이 값들이
+    // 바뀌면 아래 리셋 effect가 items/page를 리셋하지만 page 값 자체는
+    // 이미 1일 수 있어(값이 안 바뀌면 이 effect가 재실행되지 않는다) 값
+    // 변화 자체가 새 요청을 트리거하는 신호 역할을 한다.
+    videoSetter(page, pageSize, mediaType, sortOrder).then((data) => {
       if (data) {
         setItems((prev) => [...prev, ...data.videos]);
         setTotalPages(data.totalPages);
         setTotalVideos(data.totalVideos);
       }
     });
-  }, [page, pageSize]);
+  }, [page, pageSize, mediaType, sortOrder]);
+
+  // 타입 필터/정렬 순서가 바뀌면 지금까지 불러온 목록은 더 이상 유효하지
+  // 않다(다른 조건으로 다시 페이지 1부터 불러와야 한다) — pageSize 변경
+  // 리셋과 같은 방식이지만, 슬라이더 드래그처럼 값이 연달아 바뀌지 않는
+  // 이산적인 조작이라 디바운스 없이 바로 리셋한다.
+  const isFirstFilterSortRenderRef = useRef(true);
+  useEffect(() => {
+    if (isFirstFilterSortRenderRef.current) {
+      isFirstFilterSortRenderRef.current = false;
+      return;
+    }
+    loadedPagesRef.current.clear();
+    setItems([]);
+    setTotalPages(0);
+    setTotalVideos(0);
+    setPage(1);
+  }, [mediaType, sortOrder]);
 
   // autoPlay 속성에만 맡기면 브라우저 자동재생 정책에 막혔을 때 아무 로그도
   // 없이 조용히 멈춰버린다. 명시적으로 play()를 호출해 실패 사유(Promise
@@ -635,21 +666,50 @@ function App() {
             My Video App
           </Text>
         </Group>
-        <Group gap="xs" className={Style.GridSizeControl} aria-label="그리드 크기 조절">
-          <IconGridDots size={16} />
-          <Slider
-            className={Style.GridSizeSlider}
-            value={gridItemWidth}
-            onChange={setGridItemWidth}
-            min={MIN_GRID_ITEM_WIDTH}
-            max={MAX_GRID_ITEM_WIDTH}
-            step={10}
-            label={null}
+        <Group gap="lg" className={Style.Controls}>
+          <Group gap="xs" className={Style.GridSizeControl} aria-label="그리드 크기 조절">
+            <IconGridDots size={16} />
+            <Slider
+              className={Style.GridSizeSlider}
+              value={gridItemWidth}
+              onChange={setGridItemWidth}
+              min={MIN_GRID_ITEM_WIDTH}
+              max={MAX_GRID_ITEM_WIDTH}
+              step={10}
+              label={null}
+              size="xs"
+              color="blue"
+              aria-label="그리드 카드 크기"
+            />
+            <IconLayoutGrid size={18} />
+          </Group>
+          <SegmentedControl
+            className={Style.TypeFilter}
             size="xs"
-            color="blue"
-            aria-label="그리드 카드 크기"
+            value={mediaType}
+            onChange={(value) => setMediaType(value as MediaTypeFilter)}
+            data={[
+              { label: '전체', value: 'all' },
+              { label: '이미지', value: 'image' },
+              { label: '영상', value: 'video' },
+            ]}
+            aria-label="미디어 타입 필터"
           />
-          <IconLayoutGrid size={18} />
+          <ActionIcon
+            variant="light"
+            color="gray"
+            size="lg"
+            radius="xl"
+            onClick={() => setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
+            aria-label={sortOrder === 'desc' ? '최신순 정렬 중 — 오래된순으로 바꾸기' : '오래된순 정렬 중 — 최신순으로 바꾸기'}
+            title={sortOrder === 'desc' ? '최신순' : '오래된순'}
+          >
+            {sortOrder === 'desc' ? (
+              <IconSortDescending size={18} />
+            ) : (
+              <IconSortAscending size={18} />
+            )}
+          </ActionIcon>
         </Group>
         <Text className={Style.HeaderCount} size="sm">
           {totalVideos.toLocaleString()}개

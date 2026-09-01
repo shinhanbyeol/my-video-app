@@ -10,9 +10,17 @@ const video = axios.create({
 // 기본값에 암묵적으로 의존하지는 않는다.
 export const DEFAULT_PAGE_SIZE = 10;
 
+// 'all'이면 이미지/영상 구분 없이 전체를 보여준다. zip(이미지 여러 장을 담은
+// 앨범)은 서버에서 'image' 타입으로 취급된다.
+export type MediaTypeFilter = 'all' | 'image' | 'video';
+// 파일 생성일자 기준 정렬 방향. 'desc'(최신순)가 기존 기본 동작이다.
+export type SortOrder = 'asc' | 'desc';
+
 export const videoSetter = async (
   page: number,
   pageSize: number = DEFAULT_PAGE_SIZE,
+  type: MediaTypeFilter = 'all',
+  sort: SortOrder = 'desc',
 ): Promise<{
   videos: {
     name: string;
@@ -24,7 +32,10 @@ export const videoSetter = async (
   totalPages: number;
 }> => {
   return await video
-    .get('/api/v1/videoes' + `?page=${page}&pageSize=${pageSize}`)
+    .get(
+      '/api/v1/videoes' +
+        `?page=${page}&pageSize=${pageSize}&type=${type}&sort=${sort}`,
+    )
     .then((res) => {
       return res.data;
     })
